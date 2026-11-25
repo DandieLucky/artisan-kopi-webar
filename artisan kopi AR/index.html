@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#24150f">
+  <meta name="description" content="Buku menu interaktif Kedai Artisan Kopi dengan pengalaman Augmented Reality.">
+  <title>Artisan Kopi AR | Kedai Artisan Kopi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><a class="brand" href="./index.html"><span class="brand-mark">✳</span><span>KEDAI<br><b>ARTISAN KOPI</b></span></a><span class="top-note">SIGNATURE COLLECTION · 2026</span></header>
+    <section class="intro">
+      <p class="eyebrow">A MORE IMMERSIVE COFFEE EXPERIENCE</p>
+      <h1>Temukan cerita<br><em>di setiap tegukan.</em></h1>
+      <p class="lead">Pindai kartu menu dan lihat kreasi minuman Artisan Kopi hadir dalam pengalaman Augmented Reality.</p>
+      <button class="primary" id="startAR">Mulai pengalaman AR <span>↗</span></button>
+      <p class="hint" id="status">Siapkan kartu menu, lalu aktifkan kamera.</p>
+    </section>
+    <section class="menu-section">
+      <div class="section-head"><div><p class="eyebrow">OUR SIGNATURE MENU</p><h2>Temukan favoritmu.</h2></div><span class="count">05 DRINKS</span></div>
+      <div class="menu-grid">
+        <article class="drink"><img src="./assets/markers/aren-latte.svg" alt="Marker Aren Latte"><div><small>01 · SIGNATURE</small><h3>Aren Latte</h3><p>Espresso, susu creamy dan manis alami gula aren.</p></div></article>
+        <article class="drink"><img src="./assets/markers/butterscotch-latte.svg" alt="Marker Butterscotch Latte"><div><small>02 · SIGNATURE</small><h3>Butterscotch Latte</h3><p>Perpaduan espresso dan butterscotch yang lembut.</p></div></article>
+        <article class="drink"><img src="./assets/markers/seasalt-caramel-latte.svg" alt="Marker Seasalt Caramel Latte"><div><small>03 · SIGNATURE</small><h3>Seasalt Caramel Latte</h3><p>Latte creamy dengan karamel dan sentuhan sea salt.</p></div></article>
+        <article class="drink"><img src="./assets/markers/matcha-latte.svg" alt="Marker Matcha Latte"><div><small>04 · NON COFFEE</small><h3>Matcha Latte</h3><p>Matcha earthy dengan susu yang seimbang.</p></div></article>
+        <article class="drink"><img src="./assets/markers/americano.svg" alt="Marker Americano"><div><small>05 · CLASSIC</small><h3>Americano</h3><p>Espresso dengan karakter kopi yang bersih dan bold.</p></div></article>
+      </div>
+    </section>
+    <section class="how"><p class="eyebrow">HOW IT WORKS</p><h2>Tiga langkah menuju pengalaman baru.</h2><div class="steps"><div><b>01</b><h3>Pilih menu</h3><p>Temukan salah satu kartu marker pada buku menu.</p></div><div><b>02</b><h3>Pindai gambar</h3><p>Arahkan kamera smartphone ke gambar menu.</p></div><div><b>03</b><h3>Lihat dalam AR</h3><p>Visualisasi 3D minuman muncul di atas marker.</p></div></div></section>
+    <footer><span>© 2026 KEDAI ARTISAN KOPI</span><span>CRAFTED WITH CARE · SERVED WITH CHARACTER</span></footer>
+  </main>
+  <div class="ar-overlay" id="arOverlay" hidden>
+    <div class="ar-top"><span>ARTISAN KOPI · AR SCANNER</span><button id="closeAR" aria-label="Tutup kamera">✕</button></div>
+    <div class="scan-tip">Arahkan kamera ke salah satu gambar menu</div>
+    <div class="ar-bottom"><span id="arStatus">Mempersiapkan kamera…</span><span>Pastikan marker terlihat utuh dan terang</span></div>
+    <a-scene id="arScene" mindar-image="imageTargetSrc: ./assets/targets/targets.mind; autoStart: false; uiScanning: no; uiLoading: no; maxTrack: 1;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" embedded>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity mindar-image-target="targetIndex: 0"><a-entity class="drink-model" data-drink="aren" position="0 0 0"></a-entity></a-entity>
+      <a-entity mindar-image-target="targetIndex: 1"><a-entity class="drink-model" data-drink="butterscotch" position="0 0 0"></a-entity></a-entity>
+      <a-entity mindar-image-target="targetIndex: 2"><a-entity class="drink-model" data-drink="seasalt" position="0 0 0"></a-entity></a-entity>
+      <a-entity mindar-image-target="targetIndex: 3"><a-entity class="drink-model" data-drink="matcha" position="0 0 0"></a-entity></a-entity>
+      <a-entity mindar-image-target="targetIndex: 4"><a-entity class="drink-model" data-drink="americano" position="0 0 0"></a-entity></a-entity>
+    </a-scene>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body></html>
