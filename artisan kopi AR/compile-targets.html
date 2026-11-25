@@ -7,7 +7,7 @@
   <title>Kompilasi Marker | Artisan Kopi</title>
   <link rel="stylesheet" href="./styles.css">
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
 </head>
 <body>
 <main class="shell">
@@ -57,7 +57,7 @@ async function prepareImages(){
 button.addEventListener("click",async()=>{
  button.disabled=true;previews.innerHTML="";progress.textContent="Memulai kompilasi…";
  try{
-  if(!window.MINDAR?.IMAGE?.Compiler)throw new Error("MindAR Compiler belum termuat. Periksa koneksi internet lalu muat ulang halaman.");
+  if(!window.MINDAR?.IMAGE?.Compiler)throw new Error("Modul MindAR Compiler belum berhasil dimuat sebagai ES Module. Periksa koneksi ke jsDelivr atau coba Chrome dengan koneksi internet aktif.");
   if(!window.JSZip)throw new Error("JSZip belum termuat. Muat ulang halaman.");
   if(!markerImages.length)await prepareImages();
   const compiler=new window.MINDAR.IMAGE.Compiler();
