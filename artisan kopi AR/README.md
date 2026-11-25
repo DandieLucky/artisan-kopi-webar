@@ -42,7 +42,7 @@ Ukuran model dibuat ringan untuk kebutuhan demonstrasi WebAR. Model tetap perlu 
 File `assets/targets/targets.mind` harus tersedia sebelum image tracking berjalan. File tersebut dikompilasi dari lima foto marker pada halaman `compile-targets.html`. Urutan target harus tetap Aren Latte, Butterscotch Latte, Seasalt Caramel Latte, Matcha Latte, Americano.
 
 ## Pembuatan model
-GitHub Actions menjalankan `tools/generate_models.py` saat deploy. Script membuat lima file GLB pada `assets/models/`, lalu workflow memasukkan aset tersebut ke commit dan memublikasikan website. Untuk menjalankan generator secara lokal, instal Python 3.11, NumPy dan Trimesh, lalu jalankan:
+GitHub Actions menjalankan `tools/generate_models.py` saat deploy. Script membuat lima file GLB pada `assets/models/` di runner, kemudian workflow memasukkan aset tersebut ke paket publikasi GitHub Pages. Workflow tidak melakukan push ulang ke branch agar tidak menimbulkan konflik commit. Untuk menjalankan generator secara lokal, instal Python 3.11, NumPy dan Trimesh, lalu jalankan:
 
 ```bash
 python -m pip install numpy trimesh
