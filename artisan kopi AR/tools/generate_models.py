@@ -1,166 +1,278 @@
-import math, os
+import itertools
+import math
+import os
+
 import numpy as np
 import trimesh
 from trimesh.visual.material import PBRMaterial
 
-ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT=os.path.join(ROOT,"assets","models")
-os.makedirs(OUT,exist_ok=True)
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "assets", "models")
+os.makedirs(OUT, exist_ok=True)
 
-def rgba(h,a=255):
-    h=h.lstrip("#")
-    return np.array([int(h[i:i+2],16) for i in (0,2,4)]+[a],dtype=np.uint8)
+def rgba(hex_color, alpha=255):
+    value = hex_color.lstrip("#")
+    return np.array([int(value[i:i + 2], 16) for i in (0, 2, 4)] + [alpha], dtype=np.uint8)
 
-def material(name,color,alpha=1.0,rough=.3,metal=0):
-    return PBRMaterial(name=name,baseColorFactor=rgba(color,int(alpha*255)).tolist(),
-        metallicFactor=metal,roughnessFactor=rough,
-        alphaMode="BLEND" if alpha<.999 else "OPAQUE",doubleSided=True)
+def pbr(name, color, alpha=1.0, roughness=0.28, metallic=0.0):
+    return PBRMaterial(
+        name=name,
+        baseColorFactor=rgba(color, round(alpha * 255)).tolist(),
+        metallicFactor=metallic,
+        roughnessFactor=roughness,
+        alphaMode="BLEND" if alpha < 0.999 else "OPAQUE",
+        doubleSided=True,
+    )
 
-def add(scene,name,mesh,mat=None):
-    if mat is not None: mesh.visual.material=mat
-    scene.add_geometry(mesh,geom_name=name,node_name=name)
+def add(scene, name, mesh, material):
+    mesh.visual.material = material
+    scene.add_geometry(mesh, geom_name=name, node_name=name)
 
-def lathe(profile,n=96):
-    v=[]; f=[]
-    for r,y in profile:
-        for i in range(n):
-            a=2*math.pi*i/n; v.append([r*math.cos(a),y,r*math.sin(a)])
+def hex_mix(stops, t):
+    if t <= stops[0][0]:
+        return stops[0][1]
+    if t >= stops[-1][0]:
+        return stops[-1][1]
+    for (t0, c0), (t1, c1) in zip(stops[:-1], stops[1:]):
+        if t0 <= t <= t1:
+            a = rgba(c0)[:3].astype(float)
+            b = rgba(c1)[:3].astype(float)
+            rgb = np.clip(a + (b - a) * ((t - t0) / (t1 - t0)), 0, 255).astype(int)
+            return "#{:02x}{:02x}{:02x}".format(*rgb)
+    return stops[-1][1]
+
+def lathe(profile, sections=112):
+    vertices, faces = [], []
+    for radius, y in profile:
+        for i in range(sections):
+            angle = 2 * math.pi * i / sections
+            vertices.append([radius * math.cos(angle), y, radius * math.sin(angle)])
     for j in range(len(profile)):
-        j2=(j+1)%len(profile)
-        for i in range(n):
-            i2=(i+1)%n; a=j*n+i; b=j*n+i2; c=j2*n+i2; d=j2*n+i
-            f.extend([[a,b,c],[a,c,d]])
-    m=trimesh.Trimesh(vertices=np.array(v),faces=np.array(f),process=True); m.fix_normals()
-    return m
+        j2 = (j + 1) % len(profile)
+        for i in range(sections):
+            i2 = (i + 1) % sections
+            a, b = j * sections + i, j * sections + i2
+            c, d = j2 * sections + i2, j2 * sections + i
+            faces.extend([[a, b, c], [a, c, d]])
+    mesh = trimesh.Trimesh(vertices=np.asarray(vertices), faces=np.asarray(faces), process=True)
+    mesh.fix_normals()
+    return mesh
 
-def solid(rings,gradient,n=96):
-    v=[]; f=[]; colors=[]
-    y0=min(y for r,y in rings); y1=max(y for r,y in rings)
-    for r,y in rings:
-        for i in range(n):
-            a=2*math.pi*i/n; v.append([r*math.cos(a),y,r*math.sin(a)])
-            colors.append(gradient((y-y0)/(y1-y0+1e-9)))
-    for j in range(len(rings)-1):
-        for i in range(n):
-            i2=(i+1)%n; a=j*n+i; b=j*n+i2; c=(j+1)*n+i2; d=(j+1)*n+i
-            f.extend([[a,b,c],[a,c,d]])
-    bi=len(v); v.append([0,y0,0]); colors.append(gradient(0))
-    ti=len(v); v.append([0,y1,0]); colors.append(gradient(1))
-    for i in range(n):
-        i2=(i+1)%n; f.append([bi,i2,i])
-        a=(len(rings)-1)*n+i; b=(len(rings)-1)*n+i2; f.append([ti,a,b])
-    m=trimesh.Trimesh(vertices=np.array(v),faces=np.array(f),process=True); m.fix_normals()
-    m.visual.vertex_colors=np.array(colors,dtype=np.uint8)
-    return m
+def frustum_band(y0, y1, r0, r1, sections=112):
+    vertices, faces = [], []
+    for radius, y in ((r0, y0), (r1, y1)):
+        for i in range(sections):
+            angle = 2 * math.pi * i / sections
+            vertices.append([radius * math.cos(angle), y, radius * math.sin(angle)])
+    for i in range(sections):
+        j = (i + 1) % sections
+        a, b, c, d = i, j, sections + j, sections + i
+        faces.extend([[a, b, c], [a, c, d]])
+    mesh = trimesh.Trimesh(vertices=np.asarray(vertices), faces=np.asarray(faces), process=True)
+    mesh.fix_normals()
+    return mesh
 
-def interp(stops,t):
-    if t<=stops[0][0]: return rgba(stops[0][1])
-    if t>=stops[-1][0]: return rgba(stops[-1][1])
-    for (a,ca),(b,cb) in zip(stops[:-1],stops[1:]):
-        if a<=t<=b:
-            u=(t-a)/(b-a); return np.clip(rgba(ca)*(1-u)+rgba(cb)*u,0,255).astype(np.uint8)
+def cylinder_y(radius, height, y, sections=96):
+    mesh = trimesh.creation.cylinder(radius=radius, height=height, sections=sections)
+    mesh.apply_transform(trimesh.transformations.rotation_matrix(math.pi / 2, [1, 0, 0]))
+    mesh.apply_translation([0, y, 0])
+    return mesh
 
-def cyl_y(radius,height):
-    m=trimesh.creation.cylinder(radius=radius,height=height,sections=96)
-    m.apply_transform(trimesh.transformations.rotation_matrix(math.pi/2,[1,0,0]))
-    return m
+def torus_y(major, minor, y):
+    mesh = trimesh.creation.torus(major_radius=major, minor_radius=minor, major_sections=96, minor_sections=16)
+    mesh.apply_transform(trimesh.transformations.rotation_matrix(math.pi / 2, [1, 0, 0]))
+    mesh.apply_translation([0, y, 0])
+    return mesh
 
-def torus_y(major,minor,y,color):
-    m=trimesh.creation.torus(major_radius=major,minor_radius=minor,major_sections=64,minor_sections=12)
-    m.apply_transform(trimesh.transformations.rotation_matrix(math.pi/2,[1,0,0]))
-    m.apply_translation([0,y,0]); m.visual.face_colors=np.tile(rgba(color),(len(m.faces),1))
-    return m
+def rounded_ice(extents, position, rotation):
+    points = []
+    # A truncated cube gives ice a recognisable block shape with softened corners.
+    for perm in set(itertools.permutations((1.0, 0.76, 0.76))):
+        for signs in itertools.product((-1.0, 1.0), repeat=3):
+            points.append(np.asarray(perm) * np.asarray(signs) * np.asarray(extents) / 2)
+    mesh = trimesh.convex.convex_hull(np.asarray(points))
+    matrix = trimesh.transformations.euler_matrix(*rotation, axes="sxyz")
+    mesh.apply_transform(matrix)
+    mesh.apply_translation(position)
+    return mesh
 
-def ice(ext,pos,angle,tint):
-    m=trimesh.creation.icosphere(subdivisions=2,radius=1)
-    v=np.sign(m.vertices)*np.power(np.abs(m.vertices),.62)
-    v=v/(np.max(np.abs(v),axis=1).max()+1e-9)*np.array(ext)[None,:]
-    m.vertices=v
-    m.apply_transform(trimesh.transformations.rotation_matrix(angle,[0,1,0]))
-    m.apply_translation(pos); m.visual.face_colors=np.tile(rgba(tint,225),(len(m.faces),1))
-    return m
+def sphere(radius, position, scale=(1, 1, 1)):
+    mesh = trimesh.creation.icosphere(subdivisions=2, radius=radius)
+    mesh.apply_scale(scale)
+    mesh.apply_translation(position)
+    return mesh
 
-def sphere(r,pos,color,scale=(1,1,1),alpha=255):
-    m=trimesh.creation.icosphere(subdivisions=2,radius=r); m.apply_scale(scale); m.apply_translation(pos)
-    m.visual.face_colors=np.tile(rgba(color,alpha),(len(m.faces),1)); return m
+def tube(points, radius, sections=12):
+    pts = np.asarray(points, dtype=float)
+    vertices, faces = [], []
+    for i, point in enumerate(pts):
+        tangent = pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]
+        tangent /= np.linalg.norm(tangent) + 1e-9
+        reference = np.array([0.0, 1.0, 0.0])
+        if abs(np.dot(tangent, reference)) > 0.92:
+            reference = np.array([1.0, 0.0, 0.0])
+        axis_a = np.cross(tangent, reference)
+        axis_a /= np.linalg.norm(axis_a) + 1e-9
+        axis_b = np.cross(tangent, axis_a)
+        for j in range(sections):
+            angle = 2 * math.pi * j / sections
+            vertices.append(point + radius * (math.cos(angle) * axis_a + math.sin(angle) * axis_b))
+    for i in range(len(pts) - 1):
+        for j in range(sections):
+            j2 = (j + 1) % sections
+            a, b = i * sections + j, i * sections + j2
+            c, d = (i + 1) * sections + j2, (i + 1) * sections + j
+            faces.extend([[a, b, c], [a, c, d]])
+    mesh = trimesh.Trimesh(vertices=np.asarray(vertices), faces=np.asarray(faces), process=True)
+    mesh.fix_normals()
+    return mesh
 
-def tube(points,radius,color):
-    pts=np.array(points,float); v=[]; f=[]; n=10
-    for i,p in enumerate(pts):
-        t=pts[min(i+1,len(pts)-1)]-pts[max(i-1,0)]; t/=np.linalg.norm(t)+1e-9
-        ref=np.array([0,1,0.])
-        if abs(np.dot(t,ref))>.92: ref=np.array([1,0,0.])
-        a=np.cross(t,ref); a/=np.linalg.norm(a)+1e-9; b=np.cross(t,a)
-        for j in range(n):
-            q=2*math.pi*j/n; v.append(p+radius*(math.cos(q)*a+math.sin(q)*b))
-    for i in range(len(pts)-1):
-        for j in range(n):
-            j2=(j+1)%n; a=i*n+j; b=i*n+j2; c=(i+1)*n+j2; d=(i+1)*n+j
-            f.extend([[a,b,c],[a,c,d]])
-    m=trimesh.Trimesh(vertices=np.array(v),faces=np.array(f),process=True); m.fix_normals()
-    m.visual.face_colors=np.tile(rgba(color),(len(m.faces),1)); return m
+def front_surface_z(x, y):
+    radius = 0.195 + (y - 0.105) * (0.074 / 0.915)
+    return math.sqrt(max(radius * radius - x * x, 0.001)) + 0.003
 
-ICE=[
- ((.075,.055,.070),(-.105,.965,.035),.35,"#e8e0d0"),
- ((.070,.060,.075),(.045,.982,-.075),-.35,"#f1e9d8"),
- ((.068,.050,.070),(.145,.952,.065),.65,"#e5dfd2"),
- ((.060,.050,.064),(-.015,.985,.105),-.8,"#eee7d8"),
- ((.055,.047,.060),(-.18,.945,-.055),.15,"#e9e3d7")]
+ICE_POSITIONS = [
+    ((0.115, 0.095, 0.115), (-0.125, 1.045, 0.015), (0.12, 0.18, -0.22)),
+    ((0.115, 0.090, 0.110), (-0.025, 1.055, 0.105), (-0.10, -0.28, 0.18)),
+    ((0.105, 0.090, 0.110), (0.105, 1.045, 0.055), (0.18, 0.35, 0.10)),
+    ((0.110, 0.085, 0.105), (0.025, 1.035, -0.105), (-0.16, 0.15, 0.25)),
+]
 
-SPECS={
- "aren-latte":{"label":"Aren Latte","stops":[(0,"#ead8b6"),(.28,"#dfc18f"),(.55,"#bd8247"),(.82,"#8b4c25"),(1,"#65351d")],"top":"#79401f","streaks":[(.83,.42,.1,"#8a4a25",.012),(.78,.48,2.4,"#a86732",.010)],"swirl":"#b9783d","ice":ICE[:4],"bubbles":[(-.11,.02,.018),(.12,-.07,.014),(.04,.13,.012)],"bubble":"#6d391e"},
- "butterscotch-latte":{"label":"Butterscotch Latte","stops":[(0,"#f0dfc4"),(.25,"#ead2ad"),(.52,"#c99258"),(.82,"#a9622e"),(1,"#8a4a22")],"top":"#995323","streaks":[(.90,.54,-.25,"#d79a4d",.018),(.86,.60,1.5,"#f0c27f",.013),(.82,.48,2.7,"#b66e35",.012)],"swirl":"#e2ad67","ice":ICE,"bubbles":[(-.12,.02,.016),(.10,-.09,.012),(.03,.15,.014)],"bubble":"#8b4b22"},
- "seasalt-caramel-latte":{"label":"Seasalt Caramel Latte","stops":[(0,"#eee0c9"),(.27,"#e3c8a4"),(.54,"#c38a58"),(.82,"#9c5b31"),(1,"#824522")],"top":"#a05c2f","streaks":[(.88,.53,-.5,"#c47a3b",.016),(.84,.58,1.8,"#f0d7ad",.014),(.82,.48,2.8,"#b86c32",.012)],"foam":"#f5e8d4","swirl":"#bf793b","ice":ICE[:4],"bubbles":[(-.10,.04,.014),(.12,-.06,.012)],"bubble":"#8e512e"},
- "matcha-latte":{"label":"Matcha Latte","stops":[(0,"#f0e5ce"),(.30,"#e8ddc1"),(.55,"#c3c99a"),(.82,"#81945a"),(1,"#647a3f")],"top":"#7d9150","streaks":[(.87,.49,-.35,"#9aaa69",.018),(.83,.55,1.9,"#e5e1c8",.014)],"swirl":"#e8e0c8","ice":ICE[:4],"bubbles":[],"bubble":"#647a3f"},
- "americano":{"label":"Americano","stops":[(0,"#4c2a1c"),(.28,"#512c1c"),(.58,"#65371f"),(.84,"#804523"),(1,"#a15d2d")],"top":"#a15d2d","streaks":[(.83,.57,-.4,"#7d4324",.010)],"swirl":"#c1844e","ice":ICE,"bubbles":[(-.13,.01,.018),(.12,-.08,.014),(.04,.14,.012),(-.03,-.15,.010)],"bubble":"#3d2117"}
+SPECS = {
+    "aren-latte": {
+        "label": "Aren Latte",
+        "stops": [(0, "#ead9bd"), (.22, "#e4c99f"), (.48, "#c9965f"), (.73, "#9b5d32"), (1, "#63351f")],
+        "top": "#754122", "drizzle": "#a86632", "drizzle_lines": [(-.12, .035, .2), (-.015, .030, 2.0), (.105, .025, 4.0)],
+        "swirl": "#c28a50", "ice": True, "foam": None,
+    },
+    "butterscotch-latte": {
+        "label": "Butterscotch Latte",
+        "stops": [(0, "#f1e2ca"), (.25, "#ead3ad"), (.50, "#d4a16b"), (.76, "#b8753e"), (1, "#8b4b25")],
+        "top": "#995526", "drizzle": "#e1a85f", "drizzle_lines": [(-.13, .030, 1.0), (-.025, .038, 3.0), (.095, .028, 5.0)],
+        "swirl": "#e5b66f", "ice": True, "foam": None,
+    },
+    "seasalt-caramel-latte": {
+        "label": "Seasalt Caramel Latte",
+        "stops": [(0, "#f3e7d3"), (.25, "#e8d2b1"), (.50, "#c99567"), (.76, "#a7673b"), (1, "#814522")],
+        "top": "#a45d31", "drizzle": "#c47a3c", "drizzle_lines": [(-.12, .034, .7), (-.015, .030, 2.8), (.10, .026, 4.7)],
+        "swirl": "#bd793d", "ice": True, "foam": "#f4eadb",
+    },
+    "matcha-latte": {
+        "label": "Matcha Latte",
+        "stops": [(0, "#f1e7d4"), (.27, "#e6e1c7"), (.52, "#c5cd9d"), (.78, "#91a66a"), (1, "#627c43")],
+        "top": "#78914d", "drizzle": "#e9e3ce", "drizzle_lines": [(-.10, .030, .8), (.015, .035, 2.8), (.11, .022, 4.5)],
+        "swirl": "#eee6d2", "ice": True, "foam": None,
+    },
+    "americano": {
+        "label": "Americano",
+        "stops": [(0, "#482719"), (.30, "#512d1c"), (.58, "#683a22"), (.82, "#87502b"), (1, "#a96735")],
+        "top": "#a15d30", "drizzle": "#6e3c22", "drizzle_lines": [(-.06, .025, 1.3), (.075, .025, 4.1)],
+        "swirl": "#c18a53", "ice": True, "foam": None,
+    },
 }
 
-def build(key,s):
-    scene=trimesh.Scene()
-    glass=lathe([(.218,.025),(.226,.055),(.295,1.125),(.302,1.155),(.289,1.155),(.281,1.125),(.211,.075),(.205,.055)])
-    add(scene,"Clear tapered glass body",glass,material("clear glass","#eef6f5",.20,.08,.02))
-    base=cyl_y(.218,.035); base.apply_translation([0,.035,0])
-    add(scene,"Thick clear glass base",base,material("glass base","#edf5f5",.28,.08,.02))
-    add(scene,"Polished glass rim",torus_y(.294,.012,1.145,"#f7f2e8"))
-    add(scene,"Glass base highlight",torus_y(.216,.008,.065,"#f3f4ed"))
-    grad=lambda t: interp(s["stops"],t)
-    liquid=solid([(.195,.105),(.202,.15),(.216,.38),(.236,.66),(.258,.88),(.262,.91)],grad)
-    add(scene,"Drink liquid gradient",liquid)
-    top=cyl_y(.259,.008); top.apply_translation([0,.909,0])
-    add(scene,"Drink meniscus",top,material("drink surface",s["top"],1,.23))
-    for i,(ys,ye,theta,color,width) in enumerate(s.get("streaks",[])):
-        pts=[]
-        for k in range(16):
-            t=k/15; y=ys+(ye-ys)*t; th=theta+.22*math.sin(t*math.pi*1.4+i)
-            r=.238+(y-.5)*.025; pts.append([r*math.cos(th),y,r*math.sin(th)])
-        add(scene,"Internal syrup ribbon "+str(i+1),tube(pts,width,color))
-    if s.get("foam"):
-        foam=cyl_y(.252,.035); foam.apply_translation([0,.925,0])
-        add(scene,"Sea salt cream foam",foam,material("cream foam",s["foam"],1,.62))
-    for i,(ext,pos,angle,tint) in enumerate(s["ice"]):
-        add(scene,"Ice cube "+str(i+1),ice(ext,pos,angle,tint),material("ice "+str(i+1),tint,.64,.12))
-        if i in (0,2):
-            h=sphere(.025,[pos[0]-.012,pos[1]+.008,pos[2]+.012],"#ffffff",(1.25,.55,.7),135)
-            add(scene,"Ice highlight "+str(i+1),h,material("ice glint","#ffffff",.42,.08))
-    if s.get("swirl"):
-        pts=[]
-        for i in range(65):
-            t=i/64; a=2*math.pi*2.15*t+.35; r=.025+.17*t
-            pts.append([r*math.cos(a),.952+.008*math.sin(a*2),r*math.sin(a)])
-        add(scene,"Surface syrup swirl",tube(pts,.009,s["swirl"]))
-    for i,(x,z,r) in enumerate(s.get("bubbles",[])):
-        b=sphere(r,[x,.924,z],s["bubble"],(1,.35,1),225)
-        add(scene,"Coffee bubble "+str(i+1),b,material("coffee bubble",s["bubble"],1,.35))
-    for i,(x,y,z,r) in enumerate([(-.20,.36,.115,.009),(.205,.49,.105,.008),(-.16,.72,.18,.007),(.16,.82,.17,.008),(.03,.28,.20,.006)]):
-        d=sphere(r,[x,y,z],"#ffffff",(.75,1.4,.55),180)
-        add(scene,"Condensation droplet "+str(i+1),d,material("condensation","#ffffff",.48,.08))
-    scene.metadata={"product":s["label"],"brand":"Kedai Artisan Kopi","model":"Procedural iced coffee glass"}
+def build_model(key, spec):
+    scene = trimesh.Scene()
+
+    # Thin transparent wall: the drink remains visible through the glass in mobile AR.
+    glass = lathe([
+        (.214, .025), (.224, .055), (.296, 1.115), (.302, 1.15),
+        (.296, 1.15), (.286, 1.115), (.207, .070), (.204, .052),
+    ])
+    add(scene, "Very clear glass wall", glass, pbr("clear glass", "#f8fcff", .035, .035, .02))
+    add(scene, "Glass foot", cylinder_y(.218, .026, .038), pbr("thick clear glass base", "#eaf5f8", .10, .06))
+    add(scene, "Glass top rim", torus_y(.299, .009, 1.145), pbr("polished glass rim", "#ffffff", .72, .08))
+    add(scene, "Glass base rim", torus_y(.216, .006, .061), pbr("glass base highlight", "#f4fbff", .55, .08))
+
+    # The liquid uses separate PBR materials rather than vertex colours.
+    # This keeps the five drinks visibly different in A-Frame on mobile devices.
+    y_bottom, y_top = .105, 1.015
+    segments = 12
+    for i in range(segments):
+        t0, t1 = i / segments, (i + 1) / segments
+        y0 = y_bottom + (y_top - y_bottom) * t0
+        y1 = y_bottom + (y_top - y_bottom) * t1
+        r0 = .195 + (.270 - .195) * t0
+        r1 = .195 + (.270 - .195) * t1
+        band = frustum_band(y0, y1, r0, r1)
+        color = hex_mix(spec["stops"], (t0 + t1) / 2)
+        add(scene, "Drink gradient layer {:02d}".format(i + 1), band,
+            pbr("drink layer {:02d}".format(i + 1), color, 1.0, .25))
+
+    add(scene, "Liquid bottom", cylinder_y(.196, .008, .109), pbr("liquid base", spec["stops"][0][1], 1, .3))
+    add(scene, "Liquid surface", cylinder_y(.270, .010, 1.014), pbr("coffee meniscus", spec["top"], 1, .22))
+
+    if spec["foam"]:
+        add(scene, "Sea salt cream layer", cylinder_y(.263, .018, 1.025),
+            pbr("sea salt cream", spec["foam"], 1, .52))
+
+    # Broad, visible syrup ribbons follow the front curvature of the drink.
+    for line_index, (center_x, amplitude, phase) in enumerate(spec["drizzle_lines"]):
+        points = []
+        for step in range(32):
+            t = step / 31
+            y = .30 + .68 * t
+            x = center_x + amplitude * math.sin(t * math.pi * 2.0 + phase)
+            z = front_surface_z(x, y)
+            points.append([x, y, z])
+        add(scene, "Visible syrup ribbon {:02d}".format(line_index + 1),
+            tube(points, .0085), pbr("syrup ribbon", spec["drizzle"], 1, .28))
+
+    # Surface swirl, visible between the ice pieces.
+    spiral = []
+    for i in range(72):
+        t = i / 71
+        angle = 2 * math.pi * 1.8 * t + .25
+        radius = .018 + .17 * t
+        spiral.append([radius * math.cos(angle), 1.037 + .002 * math.sin(angle * 2), radius * math.sin(angle)])
+    add(scene, "Cream and syrup surface swirl", tube(spiral, .0055),
+        pbr("surface swirl", spec["swirl"], 1, .34))
+
+    # Four bevelled, translucent ice blocks. Their shape reads as ice rather than foam.
+    for i, (extents, position, rotation) in enumerate(ICE_POSITIONS):
+        cube = rounded_ice(extents, position, rotation)
+        tint = "#d9eef5" if i % 2 == 0 else "#eef8fb"
+        add(scene, "Translucent ice cube {:02d}".format(i + 1), cube,
+            pbr("ice glass", tint, .46, .075, .02))
+        highlight_points = [
+            [position[0] - extents[0] * .25, position[1] + extents[1] * .32, position[2] + extents[2] * .45],
+            [position[0] + extents[0] * .05, position[1] + extents[1] * .36, position[2] + extents[2] * .43],
+            [position[0] + extents[0] * .28, position[1] + extents[1] * .20, position[2] + extents[2] * .35],
+        ]
+        add(scene, "Ice highlight {:02d}".format(i + 1), tube(highlight_points, .0025),
+            pbr("ice highlight", "#ffffff", .68, .08))
+
+    # Fine condensation beads on the front of the glass.
+    droplets = [(-.205, .38), (.205, .52), (-.17, .73), (.16, .84), (.04, .26)]
+    for i, (x, y) in enumerate(droplets):
+        z = math.sqrt(max(.296 * .296 - x * x, .001)) + .002
+        bead = sphere(.008 if i % 2 else .010, [x, y, z], (1, .8, .8))
+        add(scene, "Condensation bead {:02d}".format(i + 1), bead,
+            pbr("condensation", "#ffffff", .34, .06))
+
+    # Two narrow highlights define the transparent tumbler silhouette.
+    for side, x in (("left", -.287), ("right", .287)):
+        points = []
+        for i in range(28):
+            y = .12 + .98 * i / 27
+            z = math.sqrt(max(.296 * .296 - x * x, .001)) + .004
+            points.append([x, y, z])
+        add(scene, "Glass edge highlight " + side, tube(points, .0028),
+            pbr("glass highlight", "#ffffff", .55, .07))
+
+    scene.metadata = {
+        "product": spec["label"],
+        "brand": "Kedai Artisan Kopi",
+        "model": "Iced coffee glass with layered PBR materials",
+    }
     return scene
 
-for key,spec in SPECS.items():
-    scene=build(key,spec)
-    out=os.path.join(OUT,key+".glb")
-    with open(out,"wb") as f: f.write(scene.export(file_type="glb"))
-    check=trimesh.load(out,force="scene")
-    assert len(check.geometry)>=18 and check.bounds[1][1]>1.1
-    print("Built",out,os.path.getsize(out),"bytes",len(check.geometry),"meshes")
+for model_key, model_spec in SPECS.items():
+    scene = build_model(model_key, model_spec)
+    output_path = os.path.join(OUT, model_key + ".glb")
+    with open(output_path, "wb") as output_file:
+        output_file.write(scene.export(file_type="glb"))
+    check = trimesh.load(output_path, force="scene")
+    assert len(check.geometry) >= 35, (model_key, len(check.geometry))
+    assert check.bounds[1][1] > 1.14, (model_key, check.bounds)
+    print("Built", output_path, os.path.getsize(output_path), "bytes", len(check.geometry), "meshes")
