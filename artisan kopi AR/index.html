@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./styles.css">
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -22,15 +23,16 @@
       <p class="lead">Pindai kartu menu dan lihat kreasi minuman Artisan Kopi hadir dalam pengalaman Augmented Reality.</p>
       <button class="primary" id="startAR">Mulai pengalaman AR <span>↗</span></button>
       <p class="hint" id="status">Siapkan kartu menu, lalu aktifkan kamera.</p>
+      <p class="hint"><a href="./assets/markers/marker-reference-photos.zip" download>Unduh lima foto marker untuk dicetak</a></p>
     </section>
     <section class="menu-section">
       <div class="section-head"><div><p class="eyebrow">OUR SIGNATURE MENU</p><h2>Temukan favoritmu.</h2></div><span class="count">05 DRINKS</span></div>
       <div class="menu-grid">
-        <article class="drink"><img src="./assets/markers/aren-latte.svg" alt="Marker Aren Latte"><div><small>01 · SIGNATURE</small><h3>Aren Latte</h3><p>Espresso, susu creamy dan manis alami gula aren.</p></div></article>
-        <article class="drink"><img src="./assets/markers/butterscotch-latte.svg" alt="Marker Butterscotch Latte"><div><small>02 · SIGNATURE</small><h3>Butterscotch Latte</h3><p>Perpaduan espresso dan butterscotch yang lembut.</p></div></article>
-        <article class="drink"><img src="./assets/markers/seasalt-caramel-latte.svg" alt="Marker Seasalt Caramel Latte"><div><small>03 · SIGNATURE</small><h3>Seasalt Caramel Latte</h3><p>Latte creamy dengan karamel dan sentuhan sea salt.</p></div></article>
-        <article class="drink"><img src="./assets/markers/matcha-latte.svg" alt="Marker Matcha Latte"><div><small>04 · NON COFFEE</small><h3>Matcha Latte</h3><p>Matcha earthy dengan susu yang seimbang.</p></div></article>
-        <article class="drink"><img src="./assets/markers/americano.svg" alt="Marker Americano"><div><small>05 · CLASSIC</small><h3>Americano</h3><p>Espresso dengan karakter kopi yang bersih dan bold.</p></div></article>
+        <article class="drink"><img data-marker-photo="0" src="./assets/markers/aren-latte.svg" alt="Foto marker produk"><div><small>01 · SIGNATURE</small><h3>Aren Latte</h3><p>Espresso, susu creamy dan manis alami gula aren.</p></div></article>
+        <article class="drink"><img data-marker-photo="1" src="./assets/markers/butterscotch-latte.svg" alt="Foto marker produk"><div><small>02 · SIGNATURE</small><h3>Butterscotch Latte</h3><p>Perpaduan espresso dan butterscotch yang lembut.</p></div></article>
+        <article class="drink"><img data-marker-photo="2" src="./assets/markers/seasalt-caramel-latte.svg" alt="Foto marker produk"><div><small>03 · SIGNATURE</small><h3>Seasalt Caramel Latte</h3><p>Latte creamy dengan karamel dan sentuhan sea salt.</p></div></article>
+        <article class="drink"><img data-marker-photo="3" src="./assets/markers/matcha-latte.svg" alt="Foto marker produk"><div><small>04 · NON COFFEE</small><h3>Matcha Latte</h3><p>Matcha earthy dengan susu yang seimbang.</p></div></article>
+        <article class="drink"><img data-marker-photo="4" src="./assets/markers/americano.svg" alt="Foto marker produk"><div><small>05 · CLASSIC</small><h3>Americano</h3><p>Espresso dengan karakter kopi yang bersih dan bold.</p></div></article>
       </div>
     </section>
     <section class="how"><p class="eyebrow">HOW IT WORKS</p><h2>Tiga langkah menuju pengalaman baru.</h2><div class="steps"><div><b>01</b><h3>Pilih menu</h3><p>Temukan salah satu kartu marker pada buku menu.</p></div><div><b>02</b><h3>Pindai gambar</h3><p>Arahkan kamera smartphone ke gambar menu.</p></div><div><b>03</b><h3>Lihat dalam AR</h3><p>Visualisasi 3D minuman muncul di atas marker.</p></div></div></section>
