@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#4a2c20"/><stop offset=".52" stop-color="#a66e43"/><stop offset="1" stop-color="#21130f"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#f2d4a9" stop-opacity=".55"/><stop offset="1" stop-color="#f2d4a9" stop-opacity="0"/></radialGradient>
+ <linearGradient id="drink" x2="0" y2="1"><stop stop-color="#e7d0aa"/><stop offset=".48" stop-color="#a96732"/><stop offset="1" stop-color="#392016"/></linearGradient>
+ <pattern id="grain" width="90" height="90" patternUnits="userSpaceOnUse"><path d="M12 18q25-23 36 4q-8 28-36-4M61 61q25-23 36 4q-8 28-36-4" fill="none" stroke="#f4dfc5" stroke-opacity=".12" stroke-width="3"/></pattern>
+ <filter id="shadow"><feGaussianBlur stdDeviation="20"/></filter>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#grain)"/><circle cx="550" cy="440" r="480" fill="url(#glow)"/>
+<path d="M55 55h914v914H55z" fill="none" stroke="#f4e7d3" stroke-width="5"/><path d="M75 75h874v874H75z" fill="none" stroke="#d6b28d" stroke-opacity=".6" stroke-width="2"/>
+<g fill="#f6ead8"><path d="M105 125c30-55 80-55 110 0-30 55-80 55-110 0z"/><path d="M145 125q35-20 60 0" fill="none" stroke="#5b3926" stroke-width="5"/><text x="235" y="119" font-family="Georgia,serif" font-size="34" letter-spacing="5">KEDAI</text><text x="235" y="159" font-family="Georgia,serif" font-size="34" letter-spacing="3">ARTISAN KOPI</text></g>
+<text x="512" y="245" fill="#f8e9d4" font-family="Georgia,serif" font-size="78" text-anchor="middle">Seasalt Caramel Latte</text><text x="512" y="294" fill="#edc79e" font-family="Arial,sans-serif" font-size="22" letter-spacing="8" text-anchor="middle">SEA SALT · CARAMEL</text>
+<ellipse cx="520" cy="775" rx="280" ry="65" fill="#120b08" opacity=".48" filter="url(#shadow)"/>
+<ellipse cx="520" cy="752" rx="255" ry="55" fill="#d5b18b"/><ellipse cx="520" cy="742" rx="230" ry="43" fill="#5a3928"/>
+<path d="M375 430q0-38 42-38h205q42 0 42 38l-25 292q-4 52-54 52H454q-50 0-54-52z" fill="#f5e6d3" fill-opacity=".22" stroke="#f8e7d1" stroke-width="13"/>
+<path d="M394 520h251l-18 195q-4 37-42 37H455q-38 0-42-37z" fill="url(#drink)"/>
+<path d="M400 520q120 32 240 0" fill="none" stroke="#f9e6cb" stroke-opacity=".7" stroke-width="12"/>
+<path d="M420 478l70-88 62 78-60 70zM520 464l58-78 58 77-61 52z" fill="#fff4df" fill-opacity=".78" stroke="#fff" stroke-opacity=".65" stroke-width="5"/>
+<path d="M440 550q-20 80 24 130M590 540q35 90-5 145" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="9"/>
+<g fill="#f1e6d2"><circle cx="220" cy="560" r="10"/><circle cx="250" cy="585" r="7"/><circle cx="790" cy="540" r="12"/><circle cx="820" cy="575" r="8"/></g><path d="M430 495q90-45 180 0" fill="none" stroke="#fff0d6" stroke-width="18"/>
+<g fill="#f4e6d4" opacity=".9"><circle cx="178" cy="700" r="13"/><circle cx="210" cy="735" r="8"/><circle cx="825" cy="700" r="12"/><circle cx="860" cy="744" r="7"/></g>
+<text x="512" y="880" fill="#f7e8d5" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" letter-spacing="9">SIGNATURE COLLECTION</text><path d="M355 910h314" stroke="#e9c9a4" stroke-width="3"/>
+</svg>
