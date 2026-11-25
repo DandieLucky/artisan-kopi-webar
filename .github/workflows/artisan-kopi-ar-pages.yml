@@ -1,0 +1,41 @@
+name: Deploy Artisan Kopi AR to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "artisan kopi AR/**"
+      - ".github/workflows/artisan-kopi-ar-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-artisan-kopi-ar"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp -R "artisan kopi AR/." _site/
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
