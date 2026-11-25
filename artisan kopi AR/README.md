@@ -1,52 +1,59 @@
 # Artisan Kopi AR
-Buku menu interaktif Kedai Artisan Kopi berbasis WebAR. Aplikasi menggunakan MindAR Image Tracking dan A-Frame untuk menampilkan visualisasi 3D minuman pada marker foto produk.
+
+Aplikasi buku menu interaktif berbasis Web Augmented Reality (WebAR) untuk brand fiktif Kedai Artisan Kopi. Pengunjung membuka website melalui browser smartphone, mengizinkan akses kamera, lalu memindai salah satu foto produk pada buku menu. MindAR mengenali gambar dan A-Frame menampilkan model minuman 3D prosedural di atas marker.
 
 ## Produk dan urutan target
-1. Aren Latte
-2. Butterscotch Latte
-3. Seasalt Caramel Latte
-4. Matcha Latte
-5. Americano
+
+| Target index | Produk | Model |
+|---:|---|---|
+| 0 | Aren Latte | Gelas, espresso, susu, gula aren, es dan topping |
+| 1 | Butterscotch Latte | Gelas, susu, lapisan butterscotch, es dan topping |
+| 2 | Seasalt Caramel Latte | Gelas, susu, karamel, sea salt dan es |
+| 3 | Matcha Latte | Gelas, susu, matcha dan es |
+| 4 | Americano | Gelas, kopi, es dan detail permukaan |
 
 ## Teknologi
-- MindAR Image Tracking untuk mengenali foto menu.
-- A-Frame untuk membangun dan merender model minuman 3D secara prosedural.
-- HTML, CSS, dan JavaScript untuk antarmuka serta logika aplikasi.
-- JSZip untuk membaca paket foto marker.
+- HTML5, CSS3 dan JavaScript untuk antarmuka dan logika aplikasi.
+- MindAR Image Tracking untuk mengenali foto marker.
+- A-Frame untuk membangun dan merender objek 3D secara prosedural.
+- JSZip untuk membaca lima foto marker dari arsip ZIP.
 - GitHub Pages untuk publikasi melalui HTTPS.
 
-## Cara menggunakan
-1. Buka aplikasi melalui GitHub Pages.
+## Cara menggunakan aplikasi
+1. Buka https://dandielucky.github.io/Project/ melalui browser smartphone.
 2. Tekan **Mulai pengalaman AR** dan izinkan akses kamera.
-3. Arahkan kamera smartphone ke salah satu foto marker yang dicetak.
-4. Model 3D minuman akan muncul pada target yang dikenali.
+3. Arahkan kamera ke salah satu foto marker yang dicetak.
+4. Setelah MindAR mengenali foto, model 3D produk terkait akan muncul.
 
-## Kompilasi image target
-1. Buka `compile-targets.html` melalui GitHub Pages.
+## Kompilasi marker MindAR
+File `targets.mind` harus dibuat dari lima foto marker. Aplikasi tidak dapat menjalankan image tracking sebelum file ini tersedia.
+
+1. Buka https://dandielucky.github.io/Project/compile-targets.html.
 2. Tekan **Kompilasi 5 marker**.
-3. Halaman memuat lima foto dari `assets/markers/marker-reference-photos.zip`, lalu menjalankan MindAR Compiler.
-4. Unduh file `targets.mind`.
-5. Unggah file tersebut ke folder `assets/targets/` pada repository GitHub dan commit perubahan.
-6. GitHub Actions akan memublikasikan ulang aplikasi.
+3. Tunggu proses analisis fitur visual hingga selesai. Browser akan mengunduh `targets.mind`.
+4. Buka repository GitHub dan masuk ke `artisan kopi AR/assets/targets/`.
+5. Unggah `targets.mind` dengan nama file persis tersebut.
+6. Commit perubahan dan tunggu workflow GitHub Pages selesai.
+7. Muat ulang aplikasi dan uji kelima marker.
 
-Urutan foto dalam proses kompilasi harus tetap sama dengan urutan produk di atas karena aplikasi menghubungkan target index 0 sampai 4 dengan masing-masing model.
+Urutan marker harus tetap: Aren Latte, Butterscotch Latte, Seasalt Caramel Latte, Matcha Latte, Americano. Jangan mengubah urutan tanpa mengompilasi ulang file target.
+
+## Aset foto marker
+Lima foto JPEG tersedia di `assets/markers/marker-reference-photos.zip`. File tersebut menjadi sumber foto pada halaman menu dan input untuk compiler MindAR. Cetak foto dengan ukuran yang cukup, kontras dan ketajaman yang baik. Hindari melipat, memotong, atau memantulkan cahaya pada marker.
+
+## Model 3D
+Versi aplikasi saat ini membangun lima model secara prosedural menggunakan primitive geometry A-Frame melalui `app.js`. Setiap minuman memiliki lapisan warna, gelas, es dan topping sesuai karakter produk. Implementasi ini tidak memerlukan Unity atau Blender. Model masih berupa visualisasi 3D demonstrasi dan bukan hasil pemindaian produk fisik.
+
+## Pengujian
+Lakukan uji pada smartphone dengan browser modern yang mendukung WebRTC dan WebGL. Berikan izin kamera. Uji lima marker satu per satu pada jarak dan sudut berbeda serta kondisi pencahayaan cukup. Catat perangkat, browser, keberhasilan deteksi, kestabilan tracking dan waktu respons. Jangan menyatakan aplikasi lulus uji sebelum pengujian langsung dilakukan.
 
 ## Struktur utama
 - `index.html`: halaman menu dan pemindai WebAR.
-- `styles.css`: desain responsif.
-- `app.js`: model 3D prosedural, pemuatan foto menu, dan pengendalian kamera.
-- `compile-targets.html`: kompilasi lima foto menjadi descriptor MindAR.
-- `assets/markers/marker-reference-photos.zip`: paket foto marker JPEG.
-- `assets/targets/targets.mind`: file target hasil kompilasi, harus diunggah setelah proses kompilasi.
+- `styles.css`: tampilan responsif.
+- `app.js`: model 3D prosedural, pemuatan foto menu dan pengendalian kamera.
+- `compile-targets.html`: kompilasi lima foto menjadi file target MindAR.
+- `assets/markers/marker-reference-photos.zip`: paket lima foto marker.
+- `assets/targets/targets.mind`: file target hasil kompilasi yang perlu diunggah.
 
-## Model 3D
-Lima minuman dibentuk secara prosedural menggunakan geometri A-Frame. Model terdiri atas gelas, lapisan cairan, es, busa atau garnish, dan detail permukaan sederhana. Aplikasi versi ini tidak memerlukan Unity atau Blender dan tidak menggunakan file GLB eksternal.
-
-## Persyaratan
-- Browser modern yang mendukung WebRTC dan WebGL.
-- Izin kamera.
-- HTTPS (GitHub Pages) atau localhost.
-- Pencahayaan yang cukup dan marker tercetak dengan jelas.
-
-## Pengujian
-Aplikasi harus diuji pada lima marker dan beberapa kondisi jarak, sudut, serta pencahayaan. Catat browser, perangkat, dan hasil aktual. Jangan menganggap semua kombinasi perangkat otomatis kompatibel.
+## Metode pengembangan
+Proyek menggunakan kerangka Multimedia Development Life Cycle (MDLC), yang mencakup Concept, Design, Material Collecting, Assembly, Testing dan Distribution. Tahap testing perlu diselesaikan melalui pengujian langsung pada perangkat sasaran.
