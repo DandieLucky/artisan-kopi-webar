@@ -3,63 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kompilasi Marker | Artisan Kopi AR</title>
+  <meta name="theme-color" content="#24150f">
+  <title>Kompilasi Marker | Artisan Kopi</title>
   <link rel="stylesheet" href="./styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar"><a class="brand" href="./index.html"><span class="brand-mark">✳</span><span>KEDAI<br><b>ARTISAN KOPI</b></span></a><a href="./index.html">Kembali ke aplikasi ↗</a></header>
-    <section class="intro">
-      <p class="eyebrow">PERSIAPAN IMAGE TRACKING</p>
-      <h1>Kompilasi<br><em>image target.</em></h1>
-      <p class="lead">Foto produk sudah disiapkan. Tekan tombol untuk memuat lima foto, mengompilasinya dengan MindAR, lalu mengunduh file target yang dibutuhkan aplikasi.</p>
-      <div class="steps">
-        <div><b>01</b><h3>Muat foto</h3><p>Lima foto produk dimuat dari paket aset repository.</p></div>
-        <div><b>02</b><h3>Kompilasi</h3><p>MindAR menganalisis fitur visual setiap foto.</p></div>
-        <div><b>03</b><h3>Unduh target</h3><p>File targets.mind akan diunduh otomatis.</p></div>
-      </div>
-      <button class="primary" id="compile">Kompilasi 5 marker <span>↗</span></button>
-      <p id="progress" class="hint" role="status">Urutan target: Aren Latte, Butterscotch Latte, Seasalt Caramel Latte, Matcha Latte, Americano.</p>
-      <p class="hint"><a href="./assets/markers/marker-reference-photos.zip" download>Unduh paket foto marker untuk dicetak</a></p>
-    </section>
-  </main>
-  <script>
-    const zipPath = "./assets/markers/marker-reference-photos.zip";
-    const names = ["aren_latte.jpg","butterscotch_latte.jpg","seasalt_caramel_latte.jpg","matcha_latte.jpg","americano.jpg"];
-    const button = document.querySelector("#compile");
-    const progress = document.querySelector("#progress");
-    function loadImage(src) {
-      return new Promise((resolve,reject)=>{
-        const img=new Image(); img.onload=()=>resolve(img); img.onerror=()=>reject(new Error("Gagal membaca foto marker."));
-        img.src=src;
-      });
-    }
-    button.addEventListener("click",async()=>{
-      button.disabled=true;
-      try{
-        progress.textContent="Mengunduh paket foto marker…";
-        const response=await fetch(zipPath);
-        if(!response.ok) throw new Error("Paket marker tidak ditemukan. Pastikan GitHub Pages sudah selesai diperbarui.");
-        const zip=await JSZip.loadAsync(await response.arrayBuffer());
-        const urls=[];
-        const images=await Promise.all(names.map(async name=>{
-          const file=zip.file(name); if(!file) throw new Error("File "+name+" tidak ditemukan di paket marker.");
-          const blob=await file.async("blob"); const url=URL.createObjectURL(blob); urls.push(url); return loadImage(url);
-        }));
-        const Compiler=window.MINDAR?.IMAGE?.Compiler;
-        if(!Compiler) throw new Error("MindAR Compiler belum termuat. Muat ulang halaman dan coba lagi.");
-        const compiler=new Compiler();
-        await compiler.compileImageTargets(images,p=>progress.textContent="Kompilasi image target: "+Math.round(p*100)+"%");
-        const data=await compiler.exportData();
-        const out=new Blob([data],{type:"application/octet-stream"}); const href=URL.createObjectURL(out);
-        const a=document.createElement("a"); a.href=href; a.download="targets.mind"; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(()=>{URL.revokeObjectURL(href);urls.forEach(URL.revokeObjectURL);},3000);
-        progress.textContent="Berhasil. File targets.mind sudah diunduh. Unggah file tersebut ke folder assets/targets/ pada GitHub.";
-      }catch(e){console.error(e);progress.textContent="Gagal: "+e.message;}
-      finally{button.disabled=false;}
-    });
-  </script>
-</body>
-</html>
+<main class="shell">
+  <header class="topbar"><a class="brand" href="./index.html"><span class="brand-mark">✳</span><span>KEDAI<br><b>ARTISAN KOPI</b></span></a><a href="./index.html">Kembali ke aplikasi ↗</a></header>
+  <section class="intro">
+    <p class="eyebrow">PERSIAPAN IMAGE TRACKING</p>
+    <h1>Kompilasi<br><em>image target.</em></h1>
+    <p class="lead">Halaman ini mengompilasi lima foto produk menjadi satu file target MindAR. Urutan target akan disamakan dengan pemetaan model 3D pada aplikasi.</p>
+    <div class="steps">
+      <div><b>01</b><h3>Muat foto</h3><p>Lima foto JPEG dimuat dari paket marker.</p></div>
+      <div><b>02</b><h3>Kompilasi</h3><p>MindAR menganalisis fitur visual pada setiap foto.</p></div>
+      <div><b>03</b><h3>Unduh target</h3><p>Unduh file targets.mind untuk diunggah ke repository.</p></div>
+    </div>
+    <button class="primary" id="compile">Kompilasi 5 marker <span>↗</span></button>
+    <p id="progress" class="hint" role="status" aria-live="polite">Urutan: Aren Latte, Butterscotch Latte, Seasalt Caramel Latte, Matcha Latte, Americano.</p>
+    <p class="hint"><a href="./assets/markers/marker-reference-photos.zip" download>Unduh paket foto marker untuk dicetak</a></p>
+    <div id="previews" class="menu-grid" style="margin-top:28px"></div>
+  </section>
+</main>
+<script>
+const zipPath="./assets/markers/marker-reference-photos.zip";
+const names=["aren_latte.jpg","butterscotch_latte.jpg","seasalt_caramel_latte.jpg","matcha_latte.jpg","americano.jpg"];
+const labels=["Aren Latte","Butterscotch Latte","Seasalt Caramel Latte","Matcha Latte","Americano"];
+const button=document.querySelector("#compile");
+const progress=document.querySelector("#progress");
+const previews=document.querySelector("#previews");
+let markerImages=[];
+let objectUrls=[];
+function loadImage(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error("Gagal memuat salah satu foto marker."));img.src=url;});}
+async function prepareImages(){
+ progress.textContent="Memuat paket foto marker…";
+ const response=await fetch(zipPath,{cache:"no-store"});
+ if(!response.ok) throw new Error("Paket foto marker tidak ditemukan. Pastikan ZIP sudah diunggah ke folder assets/markers.");
+ const zip=await JSZip.loadAsync(await response.arrayBuffer());
+ markerImages=await Promise.all(names.map(async(name,index)=>{
+  const file=zip.file(name);if(!file)throw new Error("Foto "+name+" tidak ditemukan di dalam ZIP.");
+  const blob=await file.async("blob");
+  const url=URL.createObjectURL(blob);objectUrls.push(url);
+  const img=await loadImage(url);
+  const card=document.createElement("article");card.className="drink";
+  const preview=document.createElement("img");preview.src=url;preview.alt=labels[index];
+  const caption=document.createElement("div");caption.innerHTML="<small>0"+(index+1)+" · IMAGE TARGET</small><h3>"+labels[index]+"</h3>";
+  card.append(preview,caption);previews.appendChild(card);
+  return img;
+ }));
+}
+button.addEventListener("click",async()=>{
+ button.disabled=true;previews.innerHTML="";progress.textContent="Memulai kompilasi…";
+ try{
+  if(!window.MINDAR?.IMAGE?.Compiler)throw new Error("MindAR Compiler belum termuat. Periksa koneksi internet lalu muat ulang halaman.");
+  if(!window.JSZip)throw new Error("JSZip belum termuat. Muat ulang halaman.");
+  if(!markerImages.length)await prepareImages();
+  const compiler=new window.MINDAR.IMAGE.Compiler();
+  await compiler.compileImageTargets(markerImages,p=>progress.textContent="Menganalisis fitur marker: "+Math.round(p*100)+"%");
+  const data=await compiler.exportData();
+  const blob=new Blob([data],{type:"application/octet-stream"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="targets.mind";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  progress.textContent="Berhasil. targets.mind telah diunduh. Unggah file ini ke artisan kopi AR/assets/targets/ dengan nama persis targets.mind.";
+ }catch(error){console.error(error);progress.textContent="Gagal: "+error.message;}
+ finally{button.disabled=false;}
+});
+window.addEventListener("beforeunload",()=>objectUrls.forEach(URL.revokeObjectURL));
+</script>
+</body></html>
