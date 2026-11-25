@@ -33,7 +33,7 @@ Palet model:
 Ukuran model dibuat ringan untuk kebutuhan demonstrasi WebAR. Model tetap perlu diperiksa pada beberapa perangkat karena kualitas transparansi dan pencahayaan dapat berbeda antar-browser.
 
 ## Cara menggunakan aplikasi
-1. Buka https://dandielucky.github.io/Project/ melalui browser smartphone.
+1. Buka https://dandielucky.github.io/artisan-kopi-webar/ melalui browser smartphone.
 2. Tekan **Mulai pengalaman AR** dan izinkan akses kamera.
 3. Arahkan kamera ke salah satu foto marker yang dicetak.
 4. Setelah MindAR mengenali foto, model 3D produk terkait akan muncul.
